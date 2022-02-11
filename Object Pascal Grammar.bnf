@@ -1,0 +1,562 @@
+/**
+
+  Browse and Doc It Object Pascal Grammar.
+  Defines language capabiltities up to Delphi 10.3 Rio.
+
+  @Version 1.0
+  @Date    15 Jun 2019
+  @Author  David Hoyle
+
+  @usesemicolon
+
+**/
+<Goal>                     ::= ( <Program> | <Package> | <Library> | <Unit> );
+
+<Program>                  ::= [ 'PROGRAM' <Ident> [ '(' <IdentList> ')' ] ';' ]
+                               <ProgramBlock> '.';
+
+<Unit>                     ::= 'UNIT' <Ident> [ <PortabilityDirective> ] ';'
+                               <InterfaceSection>
+                               <ImplementationSection>
+                               <InitSection> '.';
+
+<Package>                  ::= 'PACKAGE' <Ident> ';'
+                               [ <RequiresClause> ]
+                               [ <ContainsClause> ]
+                               'END' '.';
+
+<Library>                  ::= 'LIBRARY' <Ident> ';'
+                               <ProgramBlock> '.';
+
+<ProgramBlock>             ::= [ <UsesClause> ]
+                               <Block>;
+
+<UsesClause>               ::= 'USES' <IdentList> ';';
+
+<PortabilityDirective>     ::= 'PLATFORM' | 'DEPRECATED' <String> | 'LIBRARY';
+
+<InterfaceSection>         ::= 'INTERFACE'
+                               [ <UsesClause> ]
+                               [ <InterfaceDecl> ];
+
+<InterfaceDecl>            ::= ( <ConstSection>     |
+                                 <ResStringSection> |
+                                 <TypeSection>      |
+                                 <VarSection>       |
+                                 <ThreadVarSection> |
+                                 <ExportedHeading>  |
+                                 <ExportsStmt> )*;
+
+<ExportedHeading>          ::= ( <ProcedureHeading> | <FunctionHeading> ) ';' [ <Directive> ];
+
+<ImplementationSection>    ::= 'IMPLEMENTATION'
+                               [ <UsesClause> ]
+                               ( [ <DeclSection> ] | [ <ExportsStmt> ] )*;
+
+<Block>                    ::= [ <DeclSection> ]
+                               [ <ExportsStmt> ]
+                               <CompoundStmt>
+                               [ <ExportsStmt> ];
+
+<ExportsStmt>              ::= 'EXPORTS' <ExportsItem> [ ',' <ExportsItem> ]*;
+
+<ExportsItem>              ::= <Ident> [ 'NAME' | 'INDEX' "'" <ConstExpr> "'" ]
+                                       [ 'INDEX' | 'NAME' "'" <ConstExpr> "'" ];
+
+<DeclSection>              ::= ( <LabelDeclSection> |
+                                 <ConstSection>     |
+                                 <ResStringSection> |
+                                 <TypeSection>      |
+                                 <VarSection>       |
+                                 <ThreadVarSection> |
+                                 <ProcedureDeclSection> )*;
+
+<LabelDeclSection>         ::= 'LABEL' <LabelId>;
+
+<ConstSection>             ::= 'CONST' ( <ConstantDecl> ';' )*;
+
+<ConstantDecl>             ::= <Ident> ( '=' <ConstExpr> | ':' <TypeID> '=' <TypedConstant> ) [ <PortabilityDirective> ];
+
+<ResStringSection>         ::= 'RESOURCESTRING' ( <ResourceStringDecl> ';' )*;
+
+<ResourceStringDecl>       ::= <Ident> '=' <ConstExpr>;
+
+<TypeSection>              ::= 'TYPE' ( <TypeDecl> ';' )*;
+
+<TypeDecl>                 ::= [ <RTTIAttributes> ] <Ident> <TypeParams> '=' [ 'TYPE' ]
+                               ( <Type> | <RestrictedType> ) [ <PortabilityDirective> ];
+
+<RTTIAttributes>           ::= ( '[' <AttributeDeclaration> [ ',' ] <AttributeDeclaration> ']' )*;
+
+<AttributeDeclaration>     ::= <Identifier> [ '(' [ <ConstExpr> [ ',' <ConstExpr> ]* ] ')' ];
+
+<TypedConstant>            ::= ( <ConstExpr> | <ArrayConstant> | <RecordConstant> );
+
+<ArrayConstant>            ::= '(' ( <TypedConstant> [ ',' <TypedConstant> ]* ) ')';
+
+<RecordConstant>           ::= '(' ( <RecordFieldConstant> [ ';' <RecordFieldConstant> ]* ) ')';
+
+<RecordFieldConstant>      ::= <Ident> ':' <TypedConstant>;
+
+<Type>                     ::= <TypeID>        |
+                               <SimpleType>    |
+                               <StrucType>     |
+                               <PointerType>   |
+                               <StringType>    |
+                               <ProcedureType> |
+                               <AnonymousReferenceType> |
+                               <VariantType>   |
+                               <ClassRefType>;
+
+<TypeParams>               ::= '<' <TypeParamDeclList> '>';
+
+<TypeParamDeclList>        ::= <TypeParamDecl> [ ';' <TypeParamDecl> ]*;
+
+<TypeParamDecl>            ::= <TypeParamList> [ ':' <ConstraintList> ];
+
+<TypeParamList>            ::= ( [ <RTTIAttributes> ] [ '+' | '-' [ <RTTIAttributes> ] ] <Ident> )
+                               [ ',' ( [ <RTTIAttributes> ] [ '+' | '-' [ <RTTIAttributes> ] ] <Ident> ) ]*;
+
+<FormalTypeParamList>      ::= '<' <TypeParamDeclList> '>';
+
+<TypeArgs>                 ::= '<' ( <TypeID> | <String> ) '>';
+
+/*
+<CAttrExpr>                ::= <ConstExpr> |
+                               'TYPEOF' '(' <TypeID> ')' |
+                               'TYPEOF' '(' <TypeID> '<' [ ',' ]* '>' ')'
+                               'TYPEOF' '(' <TypeID> '<' <TypeID> [ ',' <TypeID> ]* '>' ')';
+*/
+
+<ConstraintList>           ::= <Constraint> [ ',' <Constraint> ]*;
+
+<Constraint>               ::= 'CONSTRUCTOR' | 'RECORD' | 'CLASS' | <TypeID>;
+
+<RestrictedType>           ::= <ObjectType> | <ClassType> | <InterfaceType>;
+
+<ClassRefType>             ::= 'CLASS' 'OF' <TypeID>;
+
+<SimpleType>               ::= ( <OrdinalType> | <RealType> );
+
+<RealType>                 ::= 'REAL48' | 'REAL' | 'SINGLE' | 'DOUBLE' | 'EXTENDED' | 'CURRENCY' | 'COMP';
+
+<OrdinalType>              ::= ( <SubrangeType> | <EnumeratedType> | <OrdIdent> );
+
+<OrdIdent>                 ::= 'SHORTINT' | 'SMALLINT' | 'INTEGER' | 'BYTE' | 'LONGINT' | 'INT64' |
+                               'WORD' | 'BOOLEAN' | 'CHAR' | 'WIDECHAR' | 'LONGWORD' | 'PCHAR';
+
+<VariantType>              ::= 'VARIANT' | 'OLEVARIANT';
+
+<SubrangeType>             ::= <ConstExpr> '..' <ConstExpr>;
+
+<EnumeratedType>           ::= '(' ( <EnumerateTypeElement> [ ',' <EnumerateTypeElement> ]* ) ')';
+
+<EnumerateTypeElement>     ::= <Ident> [ '=' <ConstExpr> ];
+
+<StringType>               ::= 'STRING'     |
+                               'ANSISTRING' |
+                               'WIDESTRING' |
+                               'STRING' '[' <ConstExpr> ']';
+
+<StrucType>                ::= [ 'PACKED' ] ( <ArrayType> | <SetType> | <FileType> | <RecType> [ 'PACKED' ] );
+
+<ArrayType>                ::= 'ARRAY' [ '[' <OrdinalType> [ ',' <OrdinalType> ]* ']'] 'OF' <Type> [ <PortabilityDirective> ];
+
+<RecType>                  ::= 'RECORD' [ 'HELPER' <RecordHeritage> 'FOR' <RecordTypeIdentifierName> ]
+                               (
+                                 [ <RecordVisibility> ]
+                                 [ <RecordTypeSection> ]
+                                 [ <RecordConstSection> ]
+                                 [ <RecordVarSection> ]
+                                 [ <RecordClassVarSection> ]
+                                 [ <RecordFieldList> ]
+                                 [ <RecordMethodList> ]
+                                 [ <RecordPropertyList> ]
+                               )*
+                               'END' [ <PortabilityDirective> ];
+
+<RecordHeritage>           ::= '(' <Identifier> ')';
+
+<RecordTypeIdentifierName> ::= <Identifier>;
+
+<RecordVisibility>         ::= [ [ 'STRICT' ] 'PRIVATE'    |
+                                 'PUBLIC' ];
+
+<RecordFieldList>          ::= ( <FieldDecl> [ ';' <FieldDecl> ]* ) [ <VariantSection> ] [';'];
+
+<FieldDecl>                ::= [ <RTTIAttributes> ] <IdentList> ':' <Type> [ <PortabilityDirective> ];
+
+<VariantSection>           ::= ( 'CASE' [ <Ident> ':' ] <TypeID> 'OF' <RecVariant> ';' )*;
+
+<RecVariant>               ::= ( <ConstExpr> ',' )* ':' '(' [ <RecordFieldList> ] ')';
+
+<RecordTypeSection>        ::= <TypeSection>;
+
+<RecordConstSection>       ::= <ConstSection>;
+
+<RecordVarSection>         ::= <VarSection>;
+
+<RecordClassVarSection>    ::= <ClassVarSection>;
+
+<RecordPropertyList>       ::= <ClassPropertyList>;
+
+<SetType>                  ::= 'SET' 'OF' <OrdinalType> [ <PortabilityDirective> ];
+
+<FileType>                 ::= 'FILE' [ 'OF' <TypeID> ] [ <PortabilityDirective> ];
+
+<PointerType>              ::= '^' <TypeID> [ <PortabilityDirective> ];
+
+<ProcedureType>            ::= ( <ProcedureHeading> | <FunctionHeading> ) [ 'OF' 'OBJECT' ];
+
+<AnonymousReferenceType>   ::= 'REFERENCE' 'TO' ( <ProcedureHeading> | <FunctionHeading> );
+
+<VarSection>               ::= 'VAR' ( <VarDecl> ';' )*;
+
+<ThreadVarSection>         ::= 'THREADVAR' ( <ThreadVarDecl> ';' )*;
+
+<ClassClassVarSection>     ::= 'CLASS' 'VAR' ( <VarDecl> ';' )*;
+
+<VarDecl>                  ::= <IdentList> ':' <Type> [ ( 'ABSOLUTE' ( <Ident> | <ConstExpr> ) ) | '=' <ConstExpr> ] [ <PortabilityDirective> ];
+
+//: This must be a string  constant expression.
+<ThreadVarDecl>            ::= <IdentList> ':' <Type> [ ( 'ABSOLUTE' ( <Ident> | <ConstExpr> ) ) | '=' <ConstExpr> ] [ <PortabilityDirective> ];
+
+<Expression>               ::= <SimpleExpression> [ <RelOp> <SimpleExpression> ]*;
+
+<SimpleExpression>         ::= [ '+' | '-' ] <Term> [ <AddOp> <Term> ]*;
+
+<Term>                     ::= <Factor> [ <MulOp> <Factor> ]*;
+
+<Factor>                   ::= <Designator> [ '(' <ExprList> ')' ] |
+                               '@' <Designator>                    |
+                               <Number>                            |
+                               <String>                            |
+                               'NIL'                               |
+                               '(' <Expression> ')'                |
+                               'NOT' <Factor>                      |
+                               'INHERITED' [ <Designator> ]        |
+                               <SetConstructor>                    |
+                               <TypeID> '(' <Expression> ')';
+
+//: = not processed in a C onstant Expression.
+<RelOp>                    ::= '>' | '<' | '<=' | '>=' | '<>' | 'IN' | 'IS' | 'AS' | '=';
+
+<AddOp>                    ::= '+' | '-' | 'OR' | 'XOR';
+
+<MulOp>                    ::= '*' | '/' | 'DIV' | 'MOD' | 'AND' | 'SHL' | 'SHR';
+
+<Designator>               ::= <QualID> [ <DesignatorSubElement> ]*;
+
+<DesignatorSubElement>     ::= '.' <Ident>              |
+                               '[' <ExprList> ']'       |
+                               '^'                      |
+                               '(' <MethodExprList> ')' |
+                               <TypeArgs>;
+
+<SetConstructor>           ::= '[' [ <SetElement> ( ',' <SetElement> )* ] ']';
+
+<SetElement>               ::= <Expression> [ '..' <Expression> ];
+
+<ExprList>                 ::= <Expression> ( ',' <Expression> )*;
+
+<MethodExprList>           ::= ( <AnonymousMethod> | <Expression> ) ( ',' ( <AnonymousMethod> | <Expression> ) )*;
+
+<Statement>                ::= [ <LabelId> ':' ] [ <SimpleStatement> | <StructStmt> ];
+
+<InLineVarDecl>            ::= 'VAR' <IdentList> [ ':' <TypeDecl> [ ':=' <Expression> ] ] ';';
+
+<InLineConstDecl>          ::= 'CONST' <Identifier> [ ':' <TypeDecl> ] '=' <Expression> ';';
+
+<StmtList>                 ::= <InLineStatement> ( ';' <InLineStatement> )*;
+
+<InLineStatement>          ::= <Statement> | <InLineVarDecl> | <InLineConstDecl>;
+
+<SimpleStatement>          ::= <Designator> [ '(' <ExprList> ')' ] |
+                               <Designator> ':=' <Expression>      |
+                               'INHERITED'                         |
+                               'GOTO' <LabelId>                    |
+                               '(' <Expression> ')'                |
+                               '(' <Expression> ')' /* used to handle typecasts. */;
+
+<StructStmt>               ::= <CompoundStmt>    |
+                               <ConditionalStmt> |
+                               <LoopStmt>        |
+                               <WithStmt>        |
+                               <TryExceptStmt>   |
+                               <TryFinallyStmt>  |
+                               <RaiseStmt>       |
+                               <AssemblerStmt>;
+
+<CompoundStmt>             ::= 'BEGIN' <StmtList> 'END';
+
+<ConditionalStmt>          ::= <IfStmt> | <CaseStmt>;
+
+<IfStmt>                   ::= 'IF' <Expression> 'THEN' <Statement> [ 'ELSE' <Statement> ];
+
+<CaseStmt>                 ::= 'CASE' <Expression> 'OF' <CaseSelector> ( ';' <CaseSelector> )* [ 'ELSE' <Statement> ] [';'] 'END';
+
+<CaseSelector>             ::= <CaseLabel> ( ',' <CaseLabel> )* ':' <Statement>;
+
+<CaseLabel>                ::= <ConstExpr> [ '..' <ConstExpr> ];
+
+<LoopStmt>                 ::= <RepeatStmt> | <WhileStmt> | <ForStmt>;
+
+<RepeatStmt>               ::= 'REPEAT' <Statement> 'UNTIL' <Expression>;
+
+<WhileStmt>                ::= 'WHILE' <Expression> 'DO' <Statement>;
+
+<ForStmt>                  ::= 'FOR' ( <InLineForVar> | <QualID> ) ':=' <Expression> ( 'TO' | 'DOWNTO' ) <Expression> 'DO' <Statement> |
+                               'FOR' ( <InLineForVar> | <QualID> ) 'IN' <Expression> 'DO';
+
+<InLineForVar>             ::= 'VAR' <Identifier> [ ':' <TypeDecl> ];
+
+<WithStmt>                 ::= 'WITH' <IdentList> 'DO' <Statement>;
+
+<TryExceptStmt>            ::= 'TRY'
+                                  <Statement>
+                               'EXCEPT'
+                                 <ExceptionBlock>
+                               'END';
+
+<ExceptionBlock>           ::= [ 'ON' [ <Ident> ':' ] <TypeID> 'DO' <Statement> ]*
+                               [ 'ELSE' <Statement> ];
+
+<TryFinallyStmt>           ::= 'TRY'
+                                 <Statement>
+                               'FINALLY'
+                                 <Statement>
+                               'END';
+
+<RaiseStmt>                ::= 'RAISE' [ <Object> ] [ 'AT' <Address> ];
+
+<AssemblerStmt>            ::= 'ASM'
+                                 <AssemblerLanguage>
+                               'END';
+
+<ProcedureDeclSection>     ::= <ProcedureDecl>   |
+                               <FunctionDecl>    |
+                               <ConstructorDecl> |
+                               <DestructorDecl>  |
+                               <OperatorDecl>;
+
+<ProcedureDecl>            ::= <ProcedureHeading> ';' [ <Directive> ] [ <PortabilityDirective> ] <Block> ';';
+
+<FunctionDecl>             ::= <FunctionHeading> ';' [ <Directive> ] [ <PortabilityDirective> ] <Block> ';';
+
+<ConstructorDecl>          ::= <ConstructorHeading> ';' [ <Directive> ] [ <PortabilityDirective> ] <Block> ';';
+
+<DestructorDecl>           ::= <DestructorHeading> ';' [ <Directive> ] [ <PortabilityDirective> ] <Block> ';';
+
+<OperatorDecl>             ::= <OperatorHeading> ';' [ <Directive> ] [ <PortabilityDirective> ] <Block> ';';
+
+<FunctionHeading>          ::= 'FUNCTION' <Ident> <FormalTypeParamList> [ <FormalParameters> ] ':' ( <SimpleType> | 'STRING' );
+
+<ProcedureHeading>         ::= 'PROCEDURE' <Ident> <FormalTypeParamList> [ <FormalParameters> ];
+
+<AnonymousMethod>          ::= ( <FunctionHeading> | <ProcedureHeading> ) [ <Directive> ] [ <PortabilityDirective> ] <Block>;
+
+<OperatorHeading>          ::= 'CLASS' 'OPERATOR' <RestrictedIdentList> <FormalTypeParamList> [ <FormalParameters> ] ':' ( <SimpleType> | 'STRING' );
+
+<RestrictedIdentList>      ::= 'IMPLICIT' | 'EXPLICIT' | 'NEGATIVE' | 'POSITIVE' | 'INC' | 'DEC' |
+                               'LOGICALNOT' | 'BITWISENOT' | 'TRUNC' | 'ROUND' | 'EQUAL' | 'NOTEQUAL' |
+                               'GREATERTHAN' | 'GREATERTHANOREQUAL' | 'LESSTHAN' | 'LESSTHANOREQUAL' |
+                               'ADD' | 'SUBSTRACT' | 'MULTIPLE' | 'DIVIDE' | 'INTDIVIDE' | 'MODULUS' |
+                               'LEFTSHIFT' | 'RIGHTSHIFT' | 'LOGICALAND' | 'LOGICALOR' | 'LOGICALXOR' |
+                               'BITWISEAND' | 'BITWISEOR' | 'BITWISEXOR';
+
+<FormalParameters>         ::= '(' [ <FormalParam> (';' <FormalParam> )* ] ')';
+
+<FormalParam>              ::= [ 'VAR' | 'CONST' | 'OUT' ] <Parameter>;
+
+<Parameter>                ::= <IdentList> [ ':' ( [ 'ARRAY' 'OF' ] <SimpleType> | 'STRING' | 'FILE' ) ] |
+                               <Ident> ':' <SimpleType> '=' <ConstExpr>;
+
+<Directive>                ::= 'ABSTRACT' |
+                               'ASSEMBLER' |
+                               'CDECL' |
+                               'DISPID' <ConstExpr> |
+                               'DYNAMIC' |
+                               'EXPORT' |
+                               'EXTERNAL' <ConstExpr> [ <ExportsSpecifier> ] |
+                               'FAR' |
+                               'FINAL' |
+                               'FORWARD' |
+                               'INLINE' |
+                               'LOCAL' |
+                               'MESSAGE' <ConstExpr> |
+                               'NEAR' |
+                               'OVERLOAD' |
+                               'OVERRIDE' |
+                               'PASCAL' |
+                               'REGISTER' |
+                               'REINTRODUCE' |
+                               'SAFECALL' |
+                               'STDCALL' |
+                               'VARARGS' |
+                               'VIRTUAL';
+
+<ObjectType>               ::= 'OBJECT' [ <ObjHeritage> ]
+                               (
+
+                                 [ <ObjVisibility> ]
+                                 [ <ObjTypeSection> ]
+                                 [ <ObjConstSection> ]
+                                 [ <ObjVarSection> ]
+                                 [ <ObjClassVarSection> ]
+                                 [ <ObjMethodList> ]
+                                 [ <ObjFieldList> ]
+                                )*
+                               'END';
+
+<ObjHeritage>              ::= '(' <QualID> ')';
+
+<ObjVisibility>            ::= [ [ 'STRICT' ] 'PRIVATE'    |
+                                 [ 'STRICT' ] 'PROTECTED' |
+                                 'PUBLIC' ];
+
+<ObjTypeSection>           ::= <TypeSection>;
+
+<ObjConstSection>          ::= <ConstSection>;
+
+<ObjVarSection>            ::= <VarSection>;
+
+<ObjClassVarSection>       ::= <ClassVarSection>;
+
+<RecordMethodList>         ::= ( [ <RTTIAttributes> ] <RecordMethodHeading> [';' 'VIRTUAL' ]
+                               ( [ <RTTIAttributes> ] <RecordMethodHeading> [';' 'VIRTUAL' ] ';' )* );
+
+<ObjMethodList>            ::= ( [ <RTTIAttributes> ] <ObjectMethodHeading> [';' 'VIRTUAL' ]
+                               ( [ <RTTIAttributes> ] <ObjectMethodHeading> [';' 'VIRTUAL' ] ';' )* );
+
+<ClassMethodList>          ::= ( [ <RTTIAttributes> ] <ClassMethodHeading> [';' 'VIRTUAL' ]
+                               ( [ <RTTIAttributes> ] <ClassMethodHeading> [';' 'VIRTUAL' ] ';' )* );
+
+<InterfaceMethodList>      ::= ( [ <RTTIAttributes> ] <InterfaceMethodHeading> [';' 'VIRTUAL' ]
+                               ( [ <RTTIAttributes> ] <InterfaceMethodHeading> [';' 'VIRTUAL' ] ';' )* );
+
+<RecordMethodHeading>      ::= <ProcedureHeading>   |
+                               <FunctionHeading>    |
+                               <ConstructorHeading> |
+                               <DestructorHeading>  |
+                               <OperatorHeading>;
+
+<ObjectMethodHeading>      ::= <ProcedureHeading>   |
+                               <FunctionHeading>;
+
+<ClassMethodHeading>       ::= <ProcedureHeading>   |
+                               <FunctionHeading>    |
+                               <ConstructorHeading> |
+                               <DestructorHeading>;
+
+<InterfaceMethodHeading>   ::= <ProcedureHeading>   |
+                               <FunctionHeading>    |
+                               <ConstructorHeading> |
+                               <DestructorHeading>;
+
+<ConstructorHeading>       ::= 'CONSTRUCTOR' <Ident> <FormalTypeParamList> [ <FormalParameters> ];
+
+<DestructorHeading>        ::= 'DESTRUCTOR' <Ident> <FormalTypeParamList> [ <FormalParameters> ];
+
+<ObjFieldList>             ::= ( <IdentList> ':' <Type> ( <IdentList> ':' <Type> ';' )* );
+
+<InitSection>              ::= 'INITIALIZATION' <StmtList>
+                               [ 'FINALIZATION' <StmtList> ] 'END' |
+                               'BEGIN' <StmtList> 'END'            |
+                               'END';
+
+<ClassType>                ::= 'CLASS' [ 'ABSTRACT' | 'SEALED' ] [ 'HELPER' ] [ <ClassHeritage> ] [ 'FOR' <ClassTypeIdentifierName> ]
+                               (
+                                 [ <ClassVisibility> ]
+                                 [ <ClassTypeSection> ]
+                                 [ <ClassConstSection> ]
+                                 [ <ClassVarSection> ]
+                                 [ <ClassClassVarSection> ]
+                                 [ <ClassFieldList> ]
+                                 [ <ClassMethodList> ]
+                                 [ <ClassPropertyList> ]
+                               )*
+                               'END';
+
+<ClassHeritage>            ::= '(' <IdentList> ')';
+
+<ClassVisibility>          ::= [ [ 'STRICT' ] 'PRIVATE'    |
+                                 [ 'STRICT' ] 'PROTECTED' |
+                                 'PUBLIC'                |
+                                 'PUBLISHED' ];
+
+<ClassTypeSection>         ::= <TypeSection>;
+
+<ClassConstSection>        ::= <ConstSection>;
+
+<ClassVarSection>          ::= <VarSection>;
+
+<ClassFieldList>           ::= ( [ <RTTIAttributes> ] <ObjFieldList> ( ';' [ <RTTIAttributes> ] <ObjFieldList> )* );
+
+<ClassPropertyList>        ::= ( <ClassVisibility> <PropertyList> ( ';' <PropertyList> )* );
+
+<PropertyList>             ::= [ <RTTIAttributes> ] 'PROPERTY' <Ident> [ <PropertyInterface> ] [ <PropertySpecifiers> ] [ <PortabilityDirective> ];
+
+<PropertyInterface>        ::= [ <PropertyParameterList> ] ':' <Ident>;
+
+<PropertyParameterList>    ::= '[' ( <IdentList> ':' <TypeID> [ ';' <IdentList> ':' <TypeID> ]* ) ']';
+
+<PropertySpecifiers>       ::= [ 'INDEX' <ConstExpr> ]
+                               [ 'READ' <Ident> ]
+                               [ 'WRITE' <Ident> ]
+                               [ 'STORED' ( <Ident> | <ConstExpr> ) ]
+                               [ ( 'DEFAULT' <ConstExpr> ) | 'NODEFAULT' ]
+                               [ 'IMPLEMENTS' <TypeID> ];
+
+<InterfaceType>            ::= ( 'INTERFACE' | 'DISPINTERFACE' )
+                               (
+                                 [ <InterfaceHeritage> ]
+                                 [ <InterfaceMethodList> ]
+                                 [ <InterfacePropertyList> ]
+                               )*
+                               'END';
+
+<InterfaceHeritage>        ::= '(' <IdentList> ')';
+
+<InterfacePropertyList>    ::= <ClassPropertyList>;
+
+<RequiresClause>           ::= 'REQUIRES' <IdentList> ';';
+
+<ContainsClause>           ::= 'CONTAINS' <IdentList> ';';
+
+<IdentList>                ::= <Ident> [ <TypeArgs> ] ( ',' <Ident> [ <TypeArgs> ] )*;
+
+<QualID>                   ::= ( [ <UnitId> '.'] )* <Ident>;
+
+<TypeID>                   ::= [ <UnitId> '.'] <Ident>;
+
+<Ident>                    ::= <Identifier>;
+
+<ConstExpr>                ::= ? An expression which evaluates to a constant at compilation time ?;
+
+<UnitId>                   ::= <Identifier>;
+
+<LabelId>                  ::= <Identifier>;
+
+<Number>                   ::= <NumericChar>+ [ '.' <NumericChar>+ ];
+
+<String>                   ::= "'" <Character>* "'";
+
+<Character>                ::= #32..#255;
+
+<ClassTypeIdentifierName>  ::= <Identifier>;
+
+<Identifier>               ::= <AlphaChar> ( <AlphaChar> | <NumericChar> )*;
+
+<AlphaChar>                ::= 'A'..'Z';
+
+<NumericChar>              ::= '0'..'9';
+
+<Address>                  ::= '$' <HexNumber>+;
+
+<HexNumber>                ::= <NumericChar> | 'A'..'F';
+
+<Object>                   ::= <Identifier>;
+
+<ExportsSpecifier>         ::= 'INDEX' <ConstExpr>;
+
+<AssemblerLanguage>        ::= ? 80x86 32bit Assembly Language ?;

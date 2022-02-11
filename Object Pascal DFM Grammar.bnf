@@ -1,0 +1,52 @@
+/**
+
+  This files contains the grammar to describe Object Pascal DFM Files.
+
+  @Version 1.0
+  @Author  David Hoyle
+  @Date    06 Aug 2016
+
+  @usesemicolon
+
+**/
+<Goal>           ::= <Object>;
+
+<Object>         ::= ( 'OBJECT' | 'INLINE' ) <Identifier> ':' <Type> [ <Index> ]
+                     ( <Property> | <Object> )*
+                     'END';
+
+<Property>       ::= <QualifiedIdent> '=' <PropertyValue>;
+
+<PropertyValue>  ::= <Identifier>    |
+                     <StringLiteral> |
+                     <Number>        |
+                     <Set>           |
+                     <ItemList>      |
+                     <BinaryData>    |
+                     <PositionData>;
+
+<ItemList>       ::= '<' <Item>* '>';
+
+<Item>           ::= 'ITEM'
+                     ( <Property> )*
+                     'END';
+
+<Type>           ::= <Identifier>;
+
+<Set>            ::= '[' [ <IdentList> ] ']';
+
+<PositionData>   ::= '(' <Number>* ')';
+
+<IdentList>      ::= <Identifier> [ ( ',' <Identifier> )* ];
+
+<QualifiedIdent> ::= <Identifier> [ ( '.' <Identifier> )* ];
+
+<Index>          ::= '[' <Number> ']';
+
+<Identifier>     ::= ? Valid object pascal identifier. ?;
+
+<StringLiteral>  ::= ? Text startingh and ending with single doubles. ?;
+
+<Number>         ::= [ '-' ] ? Pascal decimal or hexidecimal number. ?;
+
+<BinaryData>     ::= ? Pascal brace comment { ... } ?;
