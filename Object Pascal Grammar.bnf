@@ -2,10 +2,11 @@
 
   Browse and Doc It Object Pascal Grammar.
   Defines language capabiltities up to Delphi 10.3 Rio.
+  First additions to update it for 11.0 Alexandria
 
-  @Version 1.0
-  @Date    15 Jun 2019
-  @Author  David Hoyle
+  @Version 1.1
+  @Date    19 Feb 2022
+  @Author  David Hoyle/M. Humm
 
   @usesemicolon
 
@@ -554,6 +555,10 @@
 <Address>                  ::= '$' <HexNumber>+;
 
 <HexNumber>                ::= <NumericChar> | 'A'..'F';
+
+<Binary>                   ::= '%' <BinaryNumber>+; 
+
+<BinaryNumber>             ::= '0'..'1'; 
 
 <Object>                   ::= <Identifier>;
 
